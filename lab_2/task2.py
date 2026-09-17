@@ -1,101 +1,3 @@
-# import requests
-# from bs4 import BeautifulSoup
-# import pandas as pd
-# import time
-
-# headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-
-# SOURCE_A = {
-#     "name": "blog-a",
-#     "urls": [
-#         'https://www.jpmorganchase.com/about/technology/blog/ai-is-making-social-engineering-easier-than-ever',
-#         'https://www.jpmorganchase.com/about/technology/blog/the-future-engineer-is-a-problem-framer',
-#         'https://www.jpmorganchase.com/about/technology/blog/one-qubit-and-a-few-springs',
-#         'https://www.jpmorganchase.com/about/technology/blog/scaling-community-led-learning-at-enterprise-level-in-the-age-of-ai',
-#         'https://www.jpmorganchase.com/about/technology/blog/ambient-payments',
-#         'https://www.jpmorganchase.com/about/technology/blog/key-takeaways-from-innovation-week-2026',
-#         'https://www.jpmorganchase.com/about/technology/blog/oqc-jpmc-amd-quantum-ai-platform',
-#         'https://www.jpmorganchase.com/about/technology/blog/ai-is-changing-cyber-threats',
-#         'https://www.jpmorganchase.com/about/technology/blog/quantum-resistant-distributed-ledger',
-#         'https://www.jpmorganchase.com/about/technology/blog/fence-framework'
-#     ],
-#     "title_selector":   ("h3", "post-title"),
-#     "content_selector": ("div", "post-body entry-content"),
-# }
-
-# SOURCE_B = {
-#     "name": "blog-b",
-#     "urls": [
-#         'https://rightmove.blog/13-things-we-learned-from-two-ai-developer-tools-workshops-using-just-github-copilot-agent-mode/',
-#         'https://rightmove.blog/from-legacy-to-resilience-how-event-driven-systems-improved-efficiency-at-rightmove/',
-#         'https://rightmove.blog/how-to-make-your-react-tests-resilient-to-change/',
-#         'https://rightmove.blog/learning-new-skills-in-my-10-time/',
-#         'https://rightmove.blog/rightmoves-journey-to-cloud/',
-#         'https://rightmove.blog/our-journey-into-the-world-of-containers-so-far/',
-#         'https://rightmove.blog/design-cheat-sheet-for-devs/',
-#         'https://rightmove.blog/how-we-optimise-browser-performance-using-differential-serving-and-conditional-polyfilling/',
-#         'https://rightmove.blog/improving-password-integrity-with-the-haveibeenpwned-api/',
-#         'https://rightmove.blog/making-android-ui-tests-more-readable/'
-#     ],
-#     "title_selector":   ("h1", None),
-#     "content_selector": ("div", None),
-# }
-
-# def scrape_source(source):
-#     """Scrape one source and return a labelled DataFrame."""
-#     rows = []
-
-#     for url in source["urls"]:
-#         try:
-#             res = requests.get(url, headers=headers, timeout=15)
-#             res.raise_for_status()
-
-#             soup = BeautifulSoup(res.content, "lxml")
-
-#             title = soup.title.get_text(strip=True) if soup.title else "No title"
-
-#             block = (
-#                 soup.find("div", class_="text")
-#                 or soup.find("article")
-#                 or soup.find("main")
-#             )
-
-
-
-#             if not block:
-#                 print(f"[NO CONTENT] {url}")
-#                 continue
-
-#             paragraphs = block.find_all("p")
-#             text = " ".join(
-#                 p.get_text(" ", strip=True)
-#                 for p in paragraphs
-#             )
-
-#             if len(text) > 100:
-#                 rows.append({
-#                     "source": source["name"],
-#                     "url": url,
-#                     "title": title,
-#                     "text": text
-#                 })
-
-#                 print(f"[OK] {source['name']} -> {title}")
-
-#             else:
-#                 print(f"[SHORT CONTENT] {url} ({len(text)} characters)")
-
-#         except Exception as e:
-#             print(f"[ERROR] {url} -> {e}")
-
-#         time.sleep(1)
-
-#     return pd.DataFrame(rows)
-
-# corpus = pd.concat([scrape_source(SOURCE_A), scrape_source(SOURCE_B)], ignore_index=True)
-# corpus.to_csv("two_source_corpus.csv", index=False)
-# print(corpus)
-
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -196,21 +98,11 @@ def scrape_source(source):
 
     return pd.DataFrame(rows)
 
-
-# ---------------------------------------------------------------------------
-# STEP 1 — Scrape both sources
-# ---------------------------------------------------------------------------
 corpus = pd.concat([scrape_source(SOURCE_A), scrape_source(SOURCE_B)], ignore_index=True)
 corpus.to_csv("two_source_corpus.csv", index=False)
 print(corpus)
 
-
-# ---------------------------------------------------------------------------
-# STEP 2 — Linguistic feature engineering (spaCy): tokens, sentences,
-# entities, nouns, verbs, avg sentence length, noun density
-# ---------------------------------------------------------------------------
 nlp = spacy.load("en_core_web_sm")
-
 
 def extract_features(text):
     """Word/sentence/POS counts for one article."""
@@ -219,9 +111,9 @@ def extract_features(text):
     num_tokens = len(doc)
     num_nouns = len([t for t in doc if t.pos_ == 'NOUN'])
     return pd.Series({
-        'num_tokens':          num_tokens,                              # words + punctuation
+        'num_tokens':          num_tokens,                             
         'num_sentences':       len(sentences),
-        'num_entities':        len(doc.ents),                           # people, orgs, places...
+        'num_entities':        len(doc.ents),                          
         'num_nouns':           num_nouns,
         'num_verbs':           len([t for t in doc if t.pos_ == 'VERB']),
         'avg_sentence_length': (num_tokens / len(sentences)) if sentences else 0.0,
@@ -237,10 +129,6 @@ print("\nLinguistic features:")
 print(corpus[['source', 'title', 'num_tokens', 'num_sentences', 'num_entities',
               'num_nouns', 'num_verbs', 'avg_sentence_length', 'noun_density']])
 
-
-# ---------------------------------------------------------------------------
-# STEP 3 — Sentiment (TextBlob): polarity [-1, 1], subjectivity [0, 1]
-# ---------------------------------------------------------------------------
 def get_sentiment(text):
     blob = TextBlob(str(text))
     return pd.Series({
@@ -256,14 +144,9 @@ corpus.to_csv("two_source_corpus_features.csv", index=False)
 print(f"\nSaved two_source_corpus_features.csv with {corpus.shape[1]} columns")
 print(corpus[['source', 'title', 'sentiment_polarity', 'sentiment_subjectivity']])
 
-
-# ---------------------------------------------------------------------------
-# STEP 4 — Graphs
-# ---------------------------------------------------------------------------
 os.makedirs("figures", exist_ok=True)
 plt.style.use('ggplot')
 
-# 4a. Distributions of word count, sentence count, noun/verb counts and polarity, by source
 count_features = ['num_tokens', 'num_sentences', 'num_nouns', 'num_verbs']
 fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 for ax, feat in zip(axes.flat, count_features):
@@ -273,7 +156,6 @@ plt.tight_layout()
 plt.savefig('figures/01_count_distributions.png', dpi=150)
 plt.show()
 
-# 4b. Sentiment distributions, by source
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 sns.histplot(data=corpus, x='sentiment_polarity', hue='source', kde=True, bins=8, ax=axes[0])
 axes[0].set_title('Sentiment Polarity by Source')
@@ -285,7 +167,6 @@ plt.tight_layout()
 plt.savefig('figures/02_sentiment_distributions.png', dpi=150)
 plt.show()
 
-# 4c. Pair plot of everything numeric, coloured by source
 numeric_cols = ['title_length', 'num_tokens', 'num_sentences', 'num_entities',
                 'num_nouns', 'num_verbs', 'noun_density', 'sentiment_polarity',
                 'sentiment_subjectivity']
@@ -297,7 +178,6 @@ plt.show()
 print("\nCorrelation matrix (all articles pooled):")
 print(corpus[numeric_cols].corr().round(2))
 
-# 4d. Grouped bar chart: mean polarity & mean noun density, by source (±1 SEM)
 means = corpus.groupby('source')[['sentiment_polarity', 'noun_density']].mean().reset_index()
 sems = corpus.groupby('source')[['sentiment_polarity', 'noun_density']].sem().reset_index()
 plot_df = means.melt(id_vars='source', var_name='metric', value_name='mean').merge(
@@ -317,7 +197,6 @@ plt.tight_layout()
 plt.savefig('figures/04_grouped_bar_comparison.png', dpi=150)
 plt.show()
 
-# 4e. TF-IDF top terms per source
 vectorizer = TfidfVectorizer(stop_words='english', max_features=15)
 for src in corpus['source'].unique():
     subset = corpus.loc[corpus['source'] == src, 'text']
@@ -334,11 +213,6 @@ for src in corpus['source'].unique():
     plt.savefig(f'figures/05_tfidf_{src}.png', dpi=150)
     plt.show()
 
-
-# ---------------------------------------------------------------------------
-# STEP 5 — Statistical test: do the two sources differ?
-# Welch's t-test (unequal-variance) on polarity and noun density, + Cohen's d
-# ---------------------------------------------------------------------------
 a = corpus[corpus['source'] == 'blog-a']
 b = corpus[corpus['source'] == 'blog-b']
 
