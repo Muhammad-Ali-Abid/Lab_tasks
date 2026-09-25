@@ -55,6 +55,7 @@ for i , doc in enumerate(documents):
 
 vectorizer = CountVectorizer()
 
+# vectorizer = CountVectorizer(stop_words = "english")
 # vectorizer = CountVectorizer(ngram_range = (1,2))
 # vectorizer = CountVectorizer(token_pattern=r"(?u)\b\w+\b")
 # vectorizer = CountVectorizer(ngram_range = (1,2) , token_pattern=r"(?u)\b\w+\b")
