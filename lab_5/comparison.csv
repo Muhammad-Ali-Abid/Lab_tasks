@@ -1,0 +1,16 @@
+Model,Features,Accuracy
+Logistic Regression,Original,0.75
+Decision Tree,Original,0.8
+Random Forest,Original,0.8
+KNN,Original,0.8
+SVC,Original,0.8
+Logistic Regression,FamilySize,0.75
+Decision Tree,FamilySize,0.8
+Random Forest,FamilySize,0.8
+KNN,FamilySize,0.85
+SVC,FamilySize,0.8
+Logistic Regression,Both,0.75
+Decision Tree,Both,0.8
+Random Forest,Both,0.8
+KNN,Both,0.85
+SVC,Both,0.8
